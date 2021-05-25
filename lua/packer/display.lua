@@ -263,7 +263,8 @@ local display_mt = {
       'hi def link packerStatus         Type', 'hi def link packerStatusCommit   Constant',
       'hi def link packerStatusSuccess  Constant', 'hi def link packerStatusFail     WarningMsg',
       'hi def link packerPackageName    Label', 'hi def link packerPackageNotLoaded    Comment',
-      'hi def link packerString         String', 'hi def link packerBool Boolean'
+      'hi def link packerPackageManuallyLoaded   Normal', 'hi def link packerString         String',
+      'hi def link packerBool Boolean'
     }
     for _, c in ipairs(highlights) do vim.cmd(c) end
   end,
@@ -285,10 +286,14 @@ local display_mt = {
     local lines = {}
 
     local padding = string.rep(" ", 3)
+    local rtps = api.nvim_list_runtime_paths()
     for plug_name, plug_conf in pairs(plugins) do
-      local header_lines = {
-        fmt(" • %s", plug_name) .. (not plug_conf.loaded and ' (not loaded)' or '')
-      }
+      local load_state = ''
+      if not plug_conf.loaded then
+        load_state = vim.tbl_contains(rtps, plug_conf.path) and ' (manually loaded)' or ' (not loaded)'
+      end
+
+      local header_lines = {fmt(" • %s", plug_name) .. load_state}
       local config_lines = {}
       for key, value in pairs(plug_conf) do
         if vim.tbl_contains(status_keys, key) then
@@ -606,6 +611,7 @@ local function make_filetype_cmds(working_sym, done_sym, error_sym)
     [[syn match packerTimeMedium /\d\{2\}\.\d\+ms/]], [[syn match packerTimeLow /\d\.\d\+ms/]],
     [[syn match packerTimeTrivial /0\.\d\+ms/]],
     [[syn match packerPackageNotLoaded /(not loaded)$/]],
+    [[syn match packerPackageManuallyLoaded /(manually loaded)$/]],
     [[syn match packerPackageName /^\ • \zs[^ ]*/]],
     [[syn match packerString /\v(''|""|(['"]).{-}[^\\]\2)/]],
     [[syn match packerBool /\<\(false\|true\)\>/]], 'hi def link packerWorking        SpecialKey',
